@@ -153,8 +153,9 @@ const YoqotilganlarPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item) => (
-            <div
-              key={item.id}
+            <Link
+              key={item._id}
+              to={`/yoqotilganlar/${item._id}`}
               className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-red-200 transition-all overflow-hidden block"
             >
               <img
@@ -182,7 +183,7 @@ const YoqotilganlarPage = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

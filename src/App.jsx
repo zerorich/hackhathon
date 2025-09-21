@@ -6,16 +6,19 @@ import { AppProvider, useApp } from './contexts/AppContext';
 
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
-import CatalogPage from './pages/TopilganlarPage';
-import PromotionsPage from './pages/PromotionsPage';
+import PromotionsPage from './pages/YoqotilganlarPage';
 import BrandsPage from './pages/BrandsPage';
 import CartPage from './pages/CartPage';
 import SearchPage from './pages/SearchPage';
 import ProfilePage from './pages/ProfilePage';
 
-// ✅ yangi sahifalar
+// 🟢 Topilganlar
 import TopilganlarPage from './pages/TopilganlarPage';
 import TopilganDetailPage from './pages/TopilganDetailPage';
+
+// 🟢 Yoqotilganlar
+import YoqotilganlarPage from './pages/YoqotilganlarPage';
+import YoqotilganDetailPage from './pages/YoqotilganDetailPage';
 
 // 🔍 Search Wrapper
 const SearchWrapper = () => {
@@ -23,14 +26,14 @@ const SearchWrapper = () => {
   const searchQuery = searchParams.get('q') || '';
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   const { products, favorites, toggleFavorite } = useApp();
   const { addToCart } = useCart();
 
   const performSearch = React.useCallback(async (query) => {
     setLoading(true);
     try {
-      const results = products.filter(product => 
+      const results = products.filter(product =>
         product.title.toLowerCase().includes(query.toLowerCase()) ||
         product.description.toLowerCase().includes(query.toLowerCase())
       );
@@ -50,7 +53,7 @@ const SearchWrapper = () => {
   }, [searchQuery, performSearch]);
 
   return (
-    <SearchPage 
+    <SearchPage
       searchQuery={searchQuery}
       searchResults={searchResults}
       loading={loading}
@@ -75,54 +78,56 @@ const AppContent = () => {
     <Layout>
       <Routes>
         {/* 🏠 Home */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
-            <HomePage 
+            <HomePage
               products={products}
               loading={loading}
               handleAddToCart={handleAddToCart}
               favorites={favorites}
               toggleFavorite={toggleFavorite}
             />
-          } 
+          }
         />
 
-        {/* 🛒 Oddiy pages */}
-        <Route path="/katalog" element={<CatalogPage />} />
-        <Route path="/yoqotilganlar" element={<PromotionsPage />} />
+        {/* 🛒 Basic pages */}
+        <Route path="/promotions" element={<PromotionsPage />} />
         <Route path="/brands" element={<BrandsPage />} />
 
         {/* 🛍 Cart */}
-        <Route 
-          path="/cart" 
+        <Route
+          path="/cart"
           element={
-            <CartPage 
+            <CartPage
               cartItems={cartItems}
               handleRemoveFromCart={handleRemoveFromCart}
               handleUpdateQuantity={handleUpdateQuantity}
             />
-          } 
+          }
         />
 
         {/* 🔍 Search */}
         <Route path="/search" element={<SearchWrapper />} />
 
         {/* 👤 Profile */}
-        <Route 
-          path="/profile" 
+        <Route
+          path="/profile"
           element={
-            <ProfilePage 
+            <ProfilePage
               user={user}
               favorites={favorites}
             />
-          } 
+          }
         />
 
-        {/* 🟢 Topilganlar + Detal */}
+        {/* 🟢 Topilganlar */}
         <Route path="/topilganlar" element={<TopilganlarPage />} />
         <Route path="/topilganlar/:id" element={<TopilganDetailPage />} />
 
+        {/* 🟢 Yoqotilganlar */}
+        <Route path="/yoqotilganlar" element={<YoqotilganlarPage />} />
+        <Route path="/yoqotilganlar/:id" element={<YoqotilganDetailPage />} />
       </Routes>
     </Layout>
   );
