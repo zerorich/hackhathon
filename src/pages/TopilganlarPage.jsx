@@ -1,15 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Phone, Calendar, Plus } from "lucide-react";
+import { MapPin, Phone, Calendar, Plus, Filter } from "lucide-react";
+
+// Predefined categories
+const CATEGORIES = [
+  { value: "all", label: "Barchasi" },
+  { value: "electronics", label: "Elektronika" },
+  { value: "documents", label: "Hujjatlar" },
+  { value: "jewelry", label: "Zargarlik" },
+  { value: "clothing", label: "Kiyim" },
+  { value: "bags", label: "Sumka" },
+  { value: "keys", label: "Kalitlar" },
+  { value: "other", label: "Boshqa" },
+];
+
+const formatDate = (iso) => {
+  try {
+    return iso ? new Date(iso).toLocaleDateString("uz-UZ") : "";
+  } catch {
+    return iso || "";
+  }
+};
 
 const TopilganlarPage = () => {
   const [items, setItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
-  // ❌ Siz `contactInfo` ni yozmagansiz
-  // ✅ To‘g‘ri boshlanishi kerak
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -18,13 +38,13 @@ const TopilganlarPage = () => {
     country: "",
     viloyat: "",
     date: "",
+    category: "electronics", // Add category field
     contactInfo: {
       phone: "",
       email: ""
     },
-    coordinates: { lat: 0, lng: 0 } // ✅
+    coordinates: { lat: 0, lng: 0 }
   });
-
 
   const fetchItems = async () => {
     try {
@@ -32,6 +52,7 @@ const TopilganlarPage = () => {
       const data = await res.json();
       if (data.success) {
         setItems(data.data);
+        setFilteredItems(data.data);
       } else {
         setError("Ma'lumotlarni olishda xatolik yuz berdi!");
       }
@@ -46,17 +67,30 @@ const TopilganlarPage = () => {
     fetchItems();
   }, []);
 
+  // Filter items by category
+  useEffect(() => {
+    if (selectedCategory === "all") {
+      setFilteredItems(items);
+    } else {
+      setFilteredItems(items.filter(item => item.category === selectedCategory));
+    }
+  }, [items, selectedCategory]);
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ гарантируем ISO-дату
     const payload = {
       ...formData,
       date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
       coordinates: {
         lat: formData.coordinates.lat || 0,
         lng: formData.coordinates.lng || 0
-      }
+      },
+      category: formData.category || "electronics"
     };
 
     try {
@@ -67,7 +101,7 @@ const TopilganlarPage = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setItems((prev) => [...prev, data.data]);
+        setItems((prev) => [data.data, ...prev]);
         setShowForm(false);
         setFormData({
           title: "",
@@ -77,17 +111,17 @@ const TopilganlarPage = () => {
           country: "",
           viloyat: "",
           date: "",
+          category: "electronics",
           contactInfo: { phone: "", email: "" },
-          coordinates: { lat: 0, lng: 0 } // сброс
+          coordinates: { lat: 0, lng: 0 }
         });
       } else {
-        alert("Xatolik: " + (data.message || "yaratib bo‘lmadi"));
+        alert("Xatolik: " + (data.message || "yaratib bo'lmadi"));
       }
     } catch (err) {
       alert("Serverga ulanishda xatolik!");
     }
   };
-
 
   if (loading) {
     return (
@@ -117,6 +151,29 @@ const TopilganlarPage = () => {
         </button>
       </div>
 
+      {/* Category Filter */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Filter className="w-5 h-5 text-gray-600" />
+          <span className="text-gray-700 font-medium">Kategoriya bo'yicha filtrlash:</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((category) => (
+            <button
+              key={category.value}
+              onClick={() => handleCategoryChange(category.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                selectedCategory === category.value
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {showForm && (
         <form
           onSubmit={handleSubmit}
@@ -131,6 +188,19 @@ const TopilganlarPage = () => {
               className="border p-2 rounded-lg"
               required
             />
+
+            <select
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="border p-2 rounded-lg"
+            >
+              {CATEGORIES.slice(1).map((category) => (
+                <option key={category.value} value={category.value}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+
             <input
               type="text"
               placeholder="Image URL"
@@ -147,6 +217,7 @@ const TopilganlarPage = () => {
             />
             <input
               type="number"
+              step="any"
               placeholder="Latitude"
               value={formData.coordinates.lat}
               onChange={(e) =>
@@ -159,6 +230,7 @@ const TopilganlarPage = () => {
             />
             <input
               type="number"
+              step="any"
               placeholder="Longitude"
               value={formData.coordinates.lng}
               onChange={(e) =>
@@ -231,11 +303,24 @@ const TopilganlarPage = () => {
         </form>
       )}
 
-      {items.length === 0 ? (
-        <p className="text-gray-600">Hozircha topilgan buyumlar yo‘q.</p>
+      {/* Results counter */}
+      <div className="mb-4 text-sm text-gray-600">
+        {selectedCategory === "all" 
+          ? `Jami: ${filteredItems.length} ta buyum` 
+          : `${CATEGORIES.find(c => c.value === selectedCategory)?.label}: ${filteredItems.length} ta buyum`
+        }
+      </div>
+
+      {filteredItems.length === 0 ? (
+        <p className="text-gray-600">
+          {selectedCategory === "all" 
+            ? "Hozircha topilgan buyumlar yo'q." 
+            : "Bu kategoriyada topilgan buyumlar yo'q."
+          }
+        </p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <Link
               key={item._id}
               to={`/topilganlar/${item._id}`}
@@ -247,7 +332,12 @@ const TopilganlarPage = () => {
                 className="w-full h-48 object-cover"
               />
               <div className="p-5">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.title}</h3>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900">{item.title}</h3>
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                    {CATEGORIES.find(c => c.value === item.category)?.label || item.category}
+                  </span>
+                </div>
                 <p className="text-gray-600 text-sm mb-4 leading-relaxed">{item.description}</p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -256,7 +346,7 @@ const TopilganlarPage = () => {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Calendar className="w-4 h-4" />
-                    {item.date}
+                    {formatDate(item.date)}
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="w-4 h-4 text-blue-600" />

@@ -72,7 +72,7 @@ const Layout = ({ children }) => {
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-700">
-                  Привет, {user?.name}!
+                  Salom, {user?.name}!
                 </span>
                 <Link 
                   to="/profile"
@@ -83,7 +83,7 @@ const Layout = ({ children }) => {
                 <button 
                   className="p-2 text-gray-600 hover:text-red-600 transition-colors"
                   onClick={logout}
-                  title="Выйти"
+                  title="Chiqish"
                 >
                   <LogOut className="w-6 h-6" />
                 </button>
@@ -93,12 +93,12 @@ const Layout = ({ children }) => {
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
                 onClick={() => setShowAuthModal(true)}
               >
-                Войти
+                Kirish
               </button>
             )}
             
             <div className="flex items-center space-x-2 text-sm">
-              <span className="text-gray-600 cursor-pointer hover:text-blue-600">UZ</span>
+              <span className="text-gray-600 cursor-pointer hover:text-blue-600">O'Z</span>
               <span className="text-gray-600 cursor-pointer hover:text-blue-600">RU</span>
             </div>
           </div>
