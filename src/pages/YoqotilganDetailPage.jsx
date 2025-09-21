@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, Calendar } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Calendar, Mail } from "lucide-react";
+
+const API_BASE = "https://productsback-production.up.railway.app/api/yoqotilganlar";
 
 const YoqotilganDetailPage = () => {
   const { id } = useParams();
@@ -11,13 +13,11 @@ const YoqotilganDetailPage = () => {
   const [error, setError] = useState("");
   const mapInstanceRef = useRef(null);
 
-  // --- Загрузка одного объекта ---
+  // --- Fetch one item ---
   const fetchItem = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `https://productsback-production.up.railway.app/api/yoqotilganlar/${id}`
-      );
+      const response = await fetch(`${API_BASE}/${id}`);
       const data = await response.json();
 
       if (data.success) {
@@ -37,7 +37,7 @@ const YoqotilganDetailPage = () => {
     if (id) fetchItem();
   }, [id, fetchItem]);
 
-  // --- Карта ---
+  // --- Map ---
   const initMap = React.useCallback(() => {
     if (!item || !item.coordinates || !window.ymaps) return;
 
@@ -61,12 +61,15 @@ const YoqotilganDetailPage = () => {
           balloonContentHeader: `<strong>${item.title}</strong>`,
           balloonContentBody: `
             <div style="max-width: 300px;">
-              <img src="${item.image || "https://via.placeholder.com/300x200"}"
+              <img src="${
+                item.images?.[0] || "https://via.placeholder.com/300x200"
+              }"
                    alt="${item.title}"
                    style="width:100%;height:160px;object-fit:cover;border-radius:8px;margin-bottom:12px;">
               <p>${item.description || ""}</p>
-              <p><strong>📍 Joy:</strong> ${item.location || "-"}</p>
-              <p><strong>📞 Tel:</strong> ${item.contact || "-"}</p>
+              <p><strong>📍 Joy:</strong> ${item.lastKnownLocation || "-"}</p>
+              <p><strong>📞 Tel:</strong> ${item.contactInfo?.phone || "-"}</p>
+              <p><strong>📧 Email:</strong> ${item.contactInfo?.email || "-"}</p>
             </div>
           `,
         },
@@ -85,7 +88,7 @@ const YoqotilganDetailPage = () => {
     }
   }, [item]);
 
-  // --- Подключаем скрипт Яндекс.Карт ---
+  // --- Load Yandex Maps script ---
   useEffect(() => {
     if (!item) return;
     if (!window.ymaps) {
@@ -108,7 +111,7 @@ const YoqotilganDetailPage = () => {
     };
   }, []);
 
-  // --- LOADING ---
+  // --- Loading ---
   if (loading) {
     return (
       <main className="max-w-4xl mx-auto px-4 py-12 text-center">
@@ -117,7 +120,7 @@ const YoqotilganDetailPage = () => {
     );
   }
 
-  // --- ERROR ---
+  // --- Error ---
   if (error || !item) {
     return (
       <main className="max-w-4xl mx-auto px-4 py-12 text-center">
@@ -129,7 +132,7 @@ const YoqotilganDetailPage = () => {
     );
   }
 
-  // --- MAIN ---
+  // --- Main ---
   return (
     <main className="max-w-6xl mx-auto px-4 py-8">
       {/* Back button */}
@@ -147,7 +150,7 @@ const YoqotilganDetailPage = () => {
         {/* Info */}
         <div className="bg-white rounded-2xl shadow-sm border p-6">
           <img
-            src={item.image || "https://via.placeholder.com/500x300?text=Yoqotilgan"}
+            src={item.images?.[0] || "https://via.placeholder.com/500x300?text=Yoqotilgan"}
             alt={item.title}
             className="w-full h-64 object-cover rounded-lg mb-6"
           />
@@ -160,23 +163,36 @@ const YoqotilganDetailPage = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-gray-700">
               <MapPin className="w-5 h-5 text-blue-600" />
-              <span>{item.location || "Joy ko‘rsatilmagan"}</span>
+              <span>{item.lastKnownLocation || item.location || "Joy ko‘rsatilmagan"}</span>
             </div>
             <div className="flex items-center gap-3 text-gray-700">
               <Calendar className="w-5 h-5 text-green-600" />
               <span>
-                {item.date ? new Date(item.date).toLocaleDateString("uz-UZ") : "Sana yo‘q"}
+                {item.date
+                  ? new Date(item.date).toLocaleDateString("uz-UZ")
+                  : "Sana yo‘q"}
               </span>
             </div>
             <div className="flex items-center gap-3 text-gray-700">
               <Phone className="w-5 h-5 text-red-600" />
               <a
-                href={`tel:${item.contact || ""}`}
+                href={`tel:${item.contactInfo?.phone || ""}`}
                 className="text-red-600 font-medium hover:underline"
               >
-                {item.contact || "Bog‘lanish uchun raqam yo‘q"}
+                {item.contactInfo?.phone || "Bog‘lanish uchun raqam yo‘q"}
               </a>
             </div>
+            {item.contactInfo?.email && (
+              <div className="flex items-center gap-3 text-gray-700">
+                <Mail className="w-5 h-5 text-indigo-600" />
+                <a
+                  href={`mailto:${item.contactInfo.email}`}
+                  className="text-indigo-600 hover:underline"
+                >
+                  {item.contactInfo.email}
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
